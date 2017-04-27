@@ -26,8 +26,6 @@ number_of_bots = ((N*M) - (number_of_players*number_of_player_objects))/number_o
 for i in range(1, number_of_bots+1):
 	number_of_players_map[-i] = number_of_player_objects
 
-print number_of_players_map
-
 # New board
 board = np.zeros((N, M))
 
