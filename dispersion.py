@@ -9,31 +9,37 @@ import math
 # =========================
 
 # Define size of board
-N, M = (10, 15)
+N, M = (6, 10)
 
 # Define number for each player
-number_of_players = {
-	1: 25,
-	2: 25,
-	3: 25
-}
+number_of_players = 3
+number_of_player_objects = 10
+
 
 # =========================
 # Calculation
 # =========================
 
+number_of_players_map = {p: number_of_player_objects for p in range(1, number_of_players+1)}
+
+number_of_bots = ((N*M) - (number_of_players*number_of_player_objects))/number_of_player_objects
+for i in range(1, number_of_bots+1):
+	number_of_players_map[-i] = number_of_player_objects
+
+print number_of_players_map
+
 # New board
 board = np.zeros((N, M))
 
 # Suffle players ordering
-players_ordering = number_of_players.keys()
+players_ordering = number_of_players_map.keys()
 random.shuffle(players_ordering)
 
 # Tern manager
 players_ordering = deque(players_ordering)
 
 
-while sum(number_of_players.values()) > 0:
+while sum(number_of_players_map.values()) > 0:
 
 	# This turn for first player in ordering
 	current_player = players_ordering[0]
@@ -45,21 +51,22 @@ while sum(number_of_players.values()) > 0:
 
 	max_distance = math.sqrt(math.pow(N-1, 2) + math.pow(M-1, 2))
 
+	if current_player > 0:
+		current_player_stamps_indices = np.where(board == current_player)
+	else:
+		current_player_stamps_indices = np.where(board < 0)
+
 	# Loop on current user stamp point
-	for n, m in np.transpose(np.where(board == current_player)):
+	for n, m in np.transpose(current_player_stamps_indices):
 		# Loop on non stamp point
 		for i, j in np.transpose(np.where(board == 0)):
 
 			# Calculate distance from each stamp point of current player
-			distance1 = math.sqrt(math.pow(n-i, 2) + math.pow(m-j, 2))
-			distance2 = math.sqrt(math.pow(n-(N-i), 2) + math.pow(m-j, 2))
-			distance3 = math.sqrt(math.pow(n-i, 2) + math.pow(m-(M-j), 2))
-			distance4 = math.sqrt(math.pow(n-(N-i), 2) + math.pow(m-(M-j), 2))
-			distance = min(distance1, distance2, distance3, distance4)
+			distance = math.sqrt(math.pow(n-i, 2) + math.pow(m-j, 2))
 
 			# Reduce score for each point (max reduce score is 1)
-			reduce_score = 1 - (distance/max_distance)
-			popability_board[i, j] -= reduce_score
+			score = math.log(distance, 100)
+			popability_board[i, j] += score
 
 
 	# Select best point for current player
@@ -71,15 +78,16 @@ while sum(number_of_players.values()) > 0:
 
 	# Finish turn
 	board[point] = current_player
-	number_of_players[current_player] -= 1
+	number_of_players_map[current_player] -= 1
 
 	# Check for winner and winner out of game 
-	if number_of_players[current_player] == 0:
+	if number_of_players_map[current_player] == 0:
 		del(players_ordering[0])
 
 	# Prepare next turn for next player
 	players_ordering.rotate(-1)
 
+board[np.where(board < 0)] = 0
 
 # End game
 print board
